@@ -1435,38 +1435,31 @@ public EventHook_CurWeapon(player)
 //
 public EventHook_Damage(player)
 {
-	static damage_take;damage_take = read_data(2)
-	static dmg_inflictor;dmg_inflictor = pev(player,pev_dmg_inflictor)
-	
-	if(pev_valid(dmg_inflictor) != 2)
-	{
-		return PLUGIN_CONTINUE
-	}
-	
-	if(!(0 < dmg_inflictor <= MaxClients))
-	{
-		// урон с гранаты на данным момент не учитывается
-		
-		return PLUGIN_CONTINUE
-	}
-	
-	static weapon_id,last_hit,attacker
-	attacker = get_user_attacker(player,weapon_id,last_hit)
-	
-	if(0 <= last_hit < HIT_END)
-	{
-		Stats_SaveHit(dmg_inflictor,player,damage_take,weapon_id,last_hit)
-	}
-	
-	if(!is_user_alive(player))
-	{
-		if(is_user_connected(attacker))
-		{
-			Stats_SaveKill(attacker,player,weapon_id,last_hit)
-		}
-	}
-	
-	return PLUGIN_CONTINUE
+    static damage_take;damage_take = read_data(2)
+    static dmg_inflictor;dmg_inflictor = pev(player,pev_dmg_inflictor)
+    
+    if(pev_valid(dmg_inflictor) != 2)
+    {
+        return PLUGIN_CONTINUE
+    }
+    
+    static weapon_id,last_hit,attacker
+    attacker = get_user_attacker(player,weapon_id,last_hit)
+    if(!is_user_connected(attacker))
+    {
+        return PLUGIN_CONTINUE
+    }
+    if(0 <= last_hit < HIT_END)
+    {
+        Stats_SaveHit(attacker,player,damage_take,weapon_id,last_hit)
+    }
+    
+    if(!is_user_alive(player))
+    {
+        Stats_SaveKill(attacker,player,weapon_id,last_hit)
+    }
+    
+    return PLUGIN_CONTINUE
 }
 
 //
@@ -1805,19 +1798,11 @@ Stats_SaveKill(killer,victim,wpn_id,hit_place)
 			case 0: // The ELO Method (http://fastcup.net/rating.html)
 			{
 				new Float:delta = 1.0 / (1.0 + floatpower(10.0,(player_data[killer][PLAYER_SKILL] - player_data[victim][PLAYER_SKILL]) / 100.0))
-				new Float:koeff = 0.0
-				
-				if(player_data[killer][PLAYER_STATS][STATS_KILLS] < 100)
-				{
-					koeff = 2.0
-				}
-				else
-				{
-					koeff = 1.5
-				}
-				
-				player_data[killer][PLAYER_SKILL] += (koeff * delta)
-				player_data[victim][PLAYER_SKILL] -= (koeff * delta)
+				new Float:killer_koeff = (player_data[killer][PLAYER_STATS][STATS_KILLS] < 100) ? 2.0 : 1.5
+				new Float:victim_koeff = (player_data[victim][PLAYER_STATS][STATS_KILLS] < 100) ? 2.0 : 1.5
+
+				player_data[killer][PLAYER_SKILL] += (killer_koeff * delta)
+				player_data[victim][PLAYER_SKILL] -= (victim_koeff * delta)
 			}
 		}
 	}
